@@ -1,0 +1,119 @@
+version: '3'
+
+networks:
+  crm_network:
+    name: crm_net
+    driver: bridge
+
+volumes:
+  db_volume:
+  crm_backend_django:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './crm_backend/'
+
+  crm_backend_django_media:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './crm_backend/media/'
+
+  v_crm_elastic:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './elasticsearch/'
+
+services:
+
+  #Servicios CRM
+
+  crm_backend:
+    build:
+      context: ./crm_backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate  &&
+             gunicorn crm_backend.wsgi:application --bind 0.0.0.0:8000"
+    ports:
+      - 9462:8000
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    volumes:
+      - crm_backend_django:/static
+      - crm_backend_django_media:/app/media
+    networks:
+      crm_network:
+        aliases:
+          - crm_backend_net
+
+  crm_frontend:
+    build:
+      context: ./crm_frontend
+      dockerfile: Dockerfile
+    ports:
+      - 3462:3000
+    networks:
+      crm_network:
+        aliases:
+          - crm_frontend_net
+
+  db:
+    image: postgres:13
+    ports:
+      - 6432:5432
+    env_file:
+      - ./.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    networks:
+      crm_network:
+        aliases:
+          - crm_db_net
+
+  #Servicios ELK
+
+  crm_elastic:
+    container_name: crm_elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
+    env_file:
+      - ./.env
+    networks:
+      crm_network:
+        aliases:
+          - crm_elastic_net
+    ports:
+      - "9434:9200"
+    volumes:
+      - v_crm_elastic:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8192M
+        reservations:
+          cpus: '4'
+          memory: 8192M
+
+  crm_kibana:
+    container_name: crm_kibana
+    image: docker.elastic.co/kibana/kibana:7.11.0
+    environment:
+    - ELASTICSEARCH_HOSTS=http://crm_elastic:9200/
+    # - ELASTIC_PASSWORD=password_example
+    # - KIBANA_PASSWORD=password_example
+    depends_on:
+    - crm_elastic
+    ports:
+      - 9435:5601
+    networks:
+      crm_network:
+        aliases:
+          - crm_kibana_net

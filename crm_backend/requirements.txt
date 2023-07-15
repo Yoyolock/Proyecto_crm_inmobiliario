@@ -1,0 +1,48 @@
+#Essentials
+Django==4.1.4
+gunicorn==20.1.0
+django-rest-auth
+django-seed
+django-inlinecss
+django-cors-headers
+djangorestframework
+django-createsuperuserwithpassword
+django_extensions
+djangorestframework-simplejwt
+
+#Database drivers
+psycopg2-binary
+pymongo[srv]==4.3.3
+sqlalchemy==1.4.45
+
+#Celery
+redis==4.4.0
+celery==5.2.7
+django_celery_results
+django_celery_beat
+celerybeat-mongo
+
+#Extra Powers
+boltons
+requests
+flake8==3.7.9
+python-dateutil
+python-decouple
+drf-yasg
+whitenoise==5.3.0
+qrcode
+coreapi
+djoser
+elasticsearch
+elasticsearch_dsl
+
+#XLS PDF
+xlsxwriter
+pdfkit
+PyPDF2
+weasyprint==57.1
+
+#Future use
+pycryptodome
+simple-crypt
+#numpy==1.14.3
